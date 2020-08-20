@@ -1,5 +1,4 @@
 import { Request, Response, } from 'express';
-import { body, check, validationResult } from 'express-validator';
 import knex from '../model/connection';
 
 class UsersController {
@@ -23,8 +22,10 @@ class UsersController {
     }
 
     async create(request: Request, response: Response) {
-        const { name, username, email } = request.body;
+        let { name, username, email } = request.body;
 
+        username = username.toLowerCase();
+        
         const user = await knex('users').insert({name, username, email});
 
         return response.json({user});
@@ -45,10 +46,6 @@ class UsersController {
         const user = await knex('users').where('id', id).first().del();
 
         return response.status(200).json({ user });
-    }
-
-    async validate(request: Request) {
-        
     }
 }
 
