@@ -6,7 +6,7 @@ class UsersController {
     async list(request: Request, response: Response) {
         const users = await knex('users').distinct();
 
-        return response.json({ users });
+        return response.status(200).json({ users });
     }
 
     async read(request: Request, response: Response) {
@@ -15,7 +15,7 @@ class UsersController {
         const user = await knex('users').where('id', id).first();
 
         if (user == null) {
-            return response.status(400).json({ message: 'User not found' });
+            return response.status(404).json({ message: 'User not found' });
         }
 
         return response.status(200).json({ user });
@@ -25,10 +25,14 @@ class UsersController {
         let { name, username, email } = request.body;
 
         username = username.toLowerCase();
+        var userId;
         
-        const user = await knex('users').insert({name, username, email});
+        const user = await knex('users')
+            .insert({name, username, email})
+            .returning('id')
+            .then(([id]) => userId = id);
 
-        return response.json({user});
+        return response.status(201).json({userId, name, username, email});
     }
 
     async update(request: Request, response: Response) {
@@ -37,7 +41,11 @@ class UsersController {
 
         const user = await knex('users').where('id', id).first().update({name, username, email});
 
-        return response.status(200).json({ user });
+        if (user === 0) {
+            return response.status(404).json({ message: 'User not found' });
+        }
+
+        return response.status(200).json({ success: true });
     }
 
     async delete(request: Request, response: Response) {
@@ -45,7 +53,11 @@ class UsersController {
 
         const user = await knex('users').where('id', id).first().del();
 
-        return response.status(200).json({ user });
+        if (user === 0) {
+            return response.status(404).json({ message: 'User not found' });
+        }
+
+        return response.status(200).json({ success: true });
     }
 }
 
